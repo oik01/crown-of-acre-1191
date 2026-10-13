@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CROWN OF ACRE: 1191 — 3D Crusader Mounted &amp; Tactical Action</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- 3D WebGL2 Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- 2D Floating Combat Labels Container -->
+  <div id="floating-labels-container"></div>
+
+  <!-- ========================================================================
+       IN-GAME BATTLE HUD
+       ======================================================================== -->
+  <div id="hud-container" class="hidden">
+    <div class="hud-top-row">
+      <!-- Top-Left: Player Knight & Warhorse Vitals + Stance Badge -->
+      <div class="hud-panel">
+        <div class="vitals-header">
+          <span class="knight-title">SIR BALDWIN OF IBELIN</span>
+          <span id="stance-badge" class="stance-badge stance-mounted">🐎 MOUNTED — DESTRIER</span>
+        </div>
+
+        <div class="vital-row">
+          <div class="vital-label-line">
+            <span>Armor &amp; Vitality</span>
+            <span id="text-player-hp">220 / 220</span>
+          </div>
+          <div class="bar-track">
+            <div id="bar-player-hp" class="bar-fill bar-hp" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <div class="vital-row">
+          <div class="vital-label-line">
+            <span>Charge &amp; Stamina</span>
+            <span id="text-player-stamina">100%</span>
+          </div>
+          <div class="bar-track">
+            <div id="bar-player-stamina" class="bar-fill bar-stamina" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <div class="vital-row">
+          <div class="vital-label-line">
+            <span>Warhorse Steed</span>
+            <span id="text-horse-hp">Destrier 100%</span>
+          </div>
+          <div class="bar-track">
+            <div id="bar-horse-hp" class="bar-fill bar-horse" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <div id="stance-hint" class="stance-hint">
+          [A/D] Turn + Bound Cam • [Hold RMB / C] Free-Look • [SPACE] Lance Charge • [E] Dismount
+        </div>
+      </div>
+
+      <!-- Top-Center: Army Morale Tug-of-War & Chained Objective Tracker -->
+      <div class="hud-center-column">
+        <div class="hud-panel">
+          <div class="morale-bar-wrap">
+            <span class="faction-tag faction-crusader">✝ CRUSADER HOST</span>
+            <div class="morale-track">
+              <div id="bar-morale-fill" class="morale-fill" style="width: 54%"></div>
+            </div>
+            <span id="text-morale-pct" class="faction-tag faction-crusader">54%</span>
+            <span class="faction-tag faction-saracen">☪ SARACEN ARMY</span>
+          </div>
+        </div>
+
+        <div class="hud-panel objective-box">
+          <div id="objective-title" class="objective-title">I. Shatter the Saracen Vanguard</div>
+          <div id="objective-desc" class="objective-desc">
+            Charge into the valley and defeat 8 Saracen vanguard troops
+          </div>
+          <div class="objective-progress-row">
+            <div class="bar-track">
+              <div id="bar-objective-fill" class="bar-fill bar-objective" style="width: 0%"></div>
+            </div>
+            <span id="text-objective-progress" class="objective-progress-text">0 / 8 Defeated</span>
+          </div>
+          <div id="objective-hint" class="objective-hint">
+            Hold [W] + [SPACE] for Couched Lance Charge • Press [2] for Companion Charge
+          </div>
+        </div>
+      </div>
+
+      <!-- Top-Right: Battle Telemetry, Combo Badge & Audio/Pause Controls -->
+      <div class="hud-panel">
+        <div class="telemetry-grid">
+          <div class="stat-box">
+            <span class="stat-label">Renown Score</span>
+            <span id="hud-score" class="stat-value">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Enemies Slain</span>
+            <span id="hud-kills" class="stat-value">0</span>
+          </div>
+          <div id="hud-combo-badge" class="combo-badge hidden">2x COMBO</div>
+        </div>
+        <div class="hud-utility-btns">
+          <button id="btn-camera-lock" class="util-btn" type="button" title="Click or press [C] to toggle Free-Look, or hold Right-Click & drag">🔒 Cam: Bound [RMB]</button>
+          <button id="btn-mute" class="util-btn" type="button">🔊 Audio</button>
+          <button id="btn-pause" class="util-btn" type="button">⏸ Pause [P]</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Aim Reticle & War-Horn Tactical Order Toast -->
+    <div class="hud-center-reticle"></div>
+    <div id="tactical-toast" class="tactical-toast hidden">
+      <div id="tactical-toast-title" class="toast-title">🎺 ORDER I: WEDGE FORMATION — FOLLOW!</div>
+      <div id="tactical-toast-sub" class="toast-sub">
+        Elite Companions rallying in protective V-wedge around your warhorse
+      </div>
+    </div>
+
+    <!-- Bottom-Center: Companion Tactical Command Bar (1-4) + Mount/Dismount [E] -->
+    <div class="hud-bottom-row">
+      <div class="hud-panel command-bar-panel">
+        <div class="command-bar-header">
+          <span>⚜️ COMPANION RETINUE TACTICAL ORDERS</span>
+          <span id="companion-alive-count">6 / 6 Active</span>
+        </div>
+        <div class="command-buttons-row">
+          <button class="cmd-btn active" data-cmd="follow" type="button">
+            <span class="key-pill">1</span>
+            <span>Wedge Follow</span>
+          </button>
+          <button class="cmd-btn" data-cmd="charge" type="button">
+            <span class="key-pill">2</span>
+            <span>Charge Target</span>
+          </button>
+          <button class="cmd-btn" data-cmd="hold" type="button">
+            <span class="key-pill">3</span>
+            <span>Shield Wall</span>
+          </button>
+          <button class="cmd-btn" data-cmd="archers" type="button">
+            <span class="key-pill">4</span>
+            <span>Hunt Archers</span>
+          </button>
+          <button id="btn-mount-toggle" class="cmd-btn mount-btn" type="button">
+            <span class="key-pill">E</span>
+            <span id="mount-btn-label">Dismount</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Virtual Thumbstick & Action Cluster -->
+    <div id="touch-controls">
+      <div id="joystick-zone">
+        <div id="joystick-knob"></div>
+      </div>
+      <div class="touch-actions-cluster">
+        <button id="touch-btn-attack" class="touch-action-btn" type="button">⚔️<br />SLASH</button>
+        <button id="touch-btn-special" class="touch-action-btn" type="button">🏇<br />CHARGE</button>
+        <button id="touch-btn-block" class="touch-action-btn" type="button">🛡️<br />SHIELD</button>
+        <button id="touch-btn-mount" class="touch-action-btn" type="button">🐎<br />MOUNT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       START SCREEN MODAL
+       ======================================================================== -->
+  <div id="start-screen" class="modal-overlay">
+    <div class="modal-card">
+      <div class="crest-emblem">✠</div>
+      <h1 class="game-title">CROWN OF ACRE: 1191</h1>
+      <p class="game-subtitle">
+        Third-Crusade Mounted &amp; Foot Tactical Combat • Lead Your Warhorse &amp; Elite Retinue
+      </p>
+
+      <div class="controls-grid">
+        <div class="control-card">
+          <h3>🐎 Mounted &amp; On-Foot Combat</h3>
+          <ul>
+            <li><strong>W / S &amp; A / D (or Arrows):</strong> Move &amp; Turn (Camera Binds Behind You)</li>
+            <li><strong>Hold Right-Click (or [C]):</strong> Unbind Camera to Free-Look 360°</li>
+            <li><strong>Left Click:</strong> Cavalry Sword Sweep / 3-Hit Foot Combo</li>
+            <li><strong>Shift / F / Right Click:</strong> Raise Heater Shield / Shield Bash</li>
+            <li><strong>SPACE &amp; [E]:</strong> Couched Lance / Dodge-Roll • [E] Mount / Dismount</li>
+          </ul>
+        </div>
+        <div class="control-card">
+          <h3>🎺 Companion Retinue Orders</h3>
+          <ul>
+            <li><strong>[1] Wedge Follow:</strong> Protective V-wedge around player</li>
+            <li><strong>[2] Charge Target:</strong> Surge into enemy line with lances</li>
+            <li><strong>[3] Shield Wall:</strong> Interlocking line with 70% armor buff</li>
+            <li><strong>[4] Hunt Archers:</strong> Storm the Eastern Ridge bowmen</li>
+            <li><strong>[P] / [ESC]:</strong> Pause Battle &amp; Tactical Overview</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="highscore-section">
+        <h4>📜 CHRONICLE OF HIGH RENOWN</h4>
+        <div id="highscore-list"></div>
+      </div>
+
+      <button id="btn-start-battle" class="primary-cta-btn" type="button">
+        ⚔️ RIDE INTO BATTLE
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       PAUSE SCREEN MODAL
+       ======================================================================== -->
+  <div id="pause-screen" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="crest-emblem">⚜️</div>
+      <h2 class="game-title">BATTLE PAUSED</h2>
+      <p class="game-subtitle">
+        Press <strong>[E]</strong> at any time to switch between Mounted Cavalry &amp; On-Foot Sword Combat, or use <strong>[1-4]</strong> to redirect your 6 Companion Knights.
+      </p>
+      <div>
+        <button id="btn-resume" class="primary-cta-btn" type="button">RESUME BATTLE</button>
+        <button id="btn-restart-pause" class="secondary-cta-btn" type="button">RESTART CAMPAIGN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       VICTORY / GAME-OVER SCREEN MODAL
+       ======================================================================== -->
+  <div id="gameover-screen" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="crest-emblem">✠</div>
+      <h2 id="gameover-title" class="game-title">VICTORY AT ACRE!</h2>
+      <p id="gameover-subtitle" class="game-subtitle">
+        The Saracen host is broken and the Crusader Standard flies above the northern ridge!
+      </p>
+
+      <div class="stats-summary-grid">
+        <div class="stat-box">
+          <span class="stat-label">Final Renown</span>
+          <span id="stat-final-score" class="stat-value">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Enemies Slain</span>
+          <span id="stat-final-kills" class="stat-value">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Allied Morale</span>
+          <span id="stat-final-morale" class="stat-value">100%</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Objectives</span>
+          <span id="stat-final-objectives" class="stat-value">5 / 5</span>
+        </div>
+      </div>
+
+      <button id="btn-restart-gameover" class="primary-cta-btn" type="button">
+        ⚔️ RIDE INTO BATTLE AGAIN
+      </button>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

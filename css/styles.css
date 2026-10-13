@@ -1,0 +1,743 @@
+/* ============================================================================
+ * CROWN OF ACRE: 1191 — Medieval Illuminated Manuscript & Forged Iron UI Theme
+ * ============================================================================ */
+
+:root {
+  --iron-bg: rgba(16, 18, 23, 0.84);
+  --iron-solid: #14171d;
+  --gold-primary: #e8c266;
+  --gold-bright: #ffe28a;
+  --gold-dim: #9e7e38;
+  --crimson: #a81c1c;
+  --crimson-bright: #e03232;
+  --azure: #2b6cb0;
+  --parchment: #f4ecd8;
+  --text-muted: #b8b09c;
+  --font-serif: 'Cinzel', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #12100e;
+  color: var(--parchment);
+  font-family: var(--font-sans);
+}
+
+#canvas-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ============================================================================
+ * FLOATING 2D COMBAT CALLOUTS (Projected from 3D World Space)
+ * ============================================================================ */
+#floating-labels-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  overflow: hidden;
+}
+
+.floating-combat-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-family: var(--font-serif);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 12px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.label-normal {
+  font-size: 1.05rem;
+  color: #fff2d6;
+}
+
+.label-crit {
+  font-size: 1.28rem;
+  color: #ffae38;
+}
+
+.label-lance {
+  font-size: 1.45rem;
+  color: #ffe478;
+  text-shadow: 0 2px 10px rgba(185, 28, 28, 0.95), 0 0 18px rgba(255, 200, 60, 0.85);
+}
+
+.label-parry {
+  font-size: 1.15rem;
+  color: #7fd4ff;
+}
+
+.label-objective {
+  font-size: 1.55rem;
+  color: #ffe885;
+  background: rgba(20, 16, 12, 0.82);
+  border: 1px solid var(--gold-primary);
+  padding: 4px 14px;
+  border-radius: 4px;
+}
+
+/* ============================================================================
+ * LIVE IN-GAME BATTLE HUD
+ * ============================================================================ */
+#hud-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px 18px;
+}
+
+.hud-top-row {
+  display: grid;
+  grid-template-columns: 280px 1fr 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+.hud-panel {
+  background: var(--iron-bg);
+  border: 1px solid rgba(232, 194, 102, 0.42);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65), inset 0 0 16px rgba(232, 194, 102, 0.08);
+  border-radius: 6px;
+  padding: 10px 14px;
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+/* Top-Left: Player & Warhorse Vitals */
+.vitals-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.knight-title {
+  font-family: var(--font-serif);
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--gold-primary);
+  letter-spacing: 0.06em;
+}
+
+.stance-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stance-mounted {
+  background: rgba(168, 28, 28, 0.85);
+  border: 1px solid var(--gold-primary);
+  color: #fff4d8;
+}
+
+.stance-foot {
+  background: rgba(43, 108, 176, 0.85);
+  border: 1px solid #90cdf4;
+  color: #ebf8ff;
+}
+
+.vital-row {
+  margin-bottom: 6px;
+}
+
+.vital-label-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.bar-track {
+  width: 100%;
+  height: 9px;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  transition: width 0.12s ease-out;
+}
+
+.bar-hp {
+  background: linear-gradient(90deg, #8b1616, #e03232);
+}
+
+.bar-stamina {
+  background: linear-gradient(90deg, #b8861b, #f6d155);
+}
+
+.bar-horse {
+  background: linear-gradient(90deg, #2b6cb0, #63b3ed);
+}
+
+.stance-hint {
+  margin-top: 5px;
+  font-size: 0.68rem;
+  color: #d8c8a2;
+  line-height: 1.25;
+}
+
+/* Top-Center: Army Morale & Active Objective */
+.hud-center-column {
+  justify-self: center;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.morale-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.faction-tag {
+  font-family: var(--font-serif);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.faction-crusader {
+  color: #ffcf66;
+}
+
+.faction-saracen {
+  color: #e06d53;
+}
+
+.morale-track {
+  flex: 1;
+  height: 10px;
+  background: linear-gradient(90deg, #6e1a1a, #3b1212);
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.morale-fill {
+  height: 100%;
+  width: 54%;
+  background: linear-gradient(90deg, #b82020, #e8c266);
+  transition: width 0.25s ease-out;
+}
+
+.objective-box {
+  text-align: center;
+}
+
+.objective-title {
+  font-family: var(--font-serif);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+  letter-spacing: 0.04em;
+}
+
+.objective-desc {
+  font-size: 0.76rem;
+  color: var(--parchment);
+  margin: 2px 0 5px;
+}
+
+.objective-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar-objective {
+  background: linear-gradient(90deg, #c9962c, #ffe484);
+}
+
+.objective-progress-text {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--gold-primary);
+  white-space: nowrap;
+}
+
+.objective-hint {
+  margin-top: 4px;
+  font-size: 0.69rem;
+  color: #b8d8be;
+}
+
+/* Top-Right: Score, Combo, Kills & Controls */
+.telemetry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.stat-box {
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(232, 194, 102, 0.22);
+  border-radius: 4px;
+  padding: 4px 8px;
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+}
+
+.combo-badge {
+  grid-column: span 2;
+  background: linear-gradient(90deg, #9b1b1b, #d97706);
+  color: #fff;
+  font-family: var(--font-serif);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: center;
+  padding: 3px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.08em;
+}
+
+.hud-utility-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.util-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(232, 194, 102, 0.35);
+  color: var(--parchment);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 5px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.util-btn:hover {
+  background: rgba(232, 194, 102, 0.2);
+  border-color: var(--gold-bright);
+}
+
+/* Center Reticle & Tactical Order Toast */
+.hud-center-reticle {
+  position: fixed;
+  top: 46%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid rgba(255, 235, 180, 0.45);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hud-center-reticle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  background: rgba(255, 226, 138, 0.85);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tactical-toast {
+  position: fixed;
+  bottom: 102px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(28, 20, 16, 0.94), rgba(16, 12, 10, 0.94));
+  border: 1.5px solid var(--gold-primary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75);
+  padding: 8px 22px;
+  border-radius: 6px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.toast-title {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--gold-bright);
+  letter-spacing: 0.06em;
+}
+
+.toast-sub {
+  font-size: 0.75rem;
+  color: #e2d8c3;
+  margin-top: 2px;
+}
+
+/* Bottom-Center: Companion Tactical Command Bar + Mount Toggle */
+.hud-bottom-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.command-bar-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+}
+
+.command-bar-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.72rem;
+  color: var(--gold-primary);
+  font-family: var(--font-serif);
+  letter-spacing: 0.05em;
+}
+
+.command-buttons-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cmd-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(26, 29, 36, 0.9);
+  border: 1px solid rgba(232, 194, 102, 0.38);
+  color: var(--parchment);
+  padding: 6px 11px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 600;
+  transition: all 0.14s ease;
+}
+
+.cmd-btn:hover {
+  border-color: var(--gold-bright);
+  background: rgba(232, 194, 102, 0.18);
+  transform: translateY(-1px);
+}
+
+.cmd-btn.active {
+  background: linear-gradient(180deg, rgba(168, 28, 28, 0.92), rgba(110, 16, 16, 0.92));
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 12px rgba(232, 194, 102, 0.45);
+  color: #fff;
+}
+
+.key-pill {
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold-bright);
+  font-family: var(--font-serif);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.mount-btn {
+  background: rgba(35, 58, 84, 0.9);
+  border-color: #7fb8eb;
+}
+
+/* ============================================================================
+ * START, PAUSE & GAME-OVER MODAL SCREENS
+ * ============================================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: radial-gradient(circle at center, rgba(14, 12, 10, 0.52) 0%, rgba(10, 9, 8, 0.86) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 720px;
+  background: linear-gradient(180deg, rgba(24, 22, 20, 0.95), rgba(15, 14, 13, 0.97));
+  border: 2px solid var(--gold-primary);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.88), inset 0 0 32px rgba(232, 194, 102, 0.12);
+  border-radius: 8px;
+  padding: 26px 32px;
+  text-align: center;
+}
+
+.crest-emblem {
+  font-size: 2.1rem;
+  color: var(--crimson-bright);
+  text-shadow: 0 0 14px rgba(232, 194, 102, 0.6);
+  margin-bottom: 4px;
+}
+
+.game-title {
+  font-family: var(--font-serif);
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--gold-bright);
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.9);
+}
+
+.game-subtitle {
+  font-size: 0.92rem;
+  color: #dfd3b8;
+  margin: 6px 0 18px;
+  letter-spacing: 0.03em;
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  text-align: left;
+  margin-bottom: 18px;
+}
+
+.control-card {
+  background: rgba(0, 0, 0, 0.42);
+  border: 1px solid rgba(232, 194, 102, 0.28);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.control-card h3 {
+  font-family: var(--font-serif);
+  font-size: 0.84rem;
+  color: var(--gold-primary);
+  margin: 0 0 6px;
+  letter-spacing: 0.04em;
+}
+
+.control-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.76rem;
+  color: #ded6c4;
+  line-height: 1.55;
+}
+
+.control-card strong {
+  color: var(--gold-bright);
+}
+
+.highscore-section {
+  background: rgba(0, 0, 0, 0.36);
+  border: 1px solid rgba(232, 194, 102, 0.24);
+  border-radius: 6px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+}
+
+.highscore-section h4 {
+  font-family: var(--font-serif);
+  font-size: 0.8rem;
+  color: var(--gold-primary);
+  margin: 0 0 8px;
+  letter-spacing: 0.06em;
+}
+
+.highscore-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 90px 100px;
+  font-size: 0.76rem;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+}
+
+.hs-rank {
+  color: var(--gold-primary);
+  font-weight: 700;
+}
+
+.hs-score {
+  text-align: right;
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+.primary-cta-btn {
+  background: linear-gradient(180deg, #b81d1d 0%, #7d1212 100%);
+  border: 2px solid var(--gold-bright);
+  color: #fff;
+  font-family: var(--font-serif);
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 12px 34px;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(184, 29, 29, 0.55);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.primary-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(232, 194, 102, 0.5);
+}
+
+.secondary-cta-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--gold-primary);
+  color: var(--parchment);
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 11px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.stats-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 18px 0 24px;
+}
+
+/* ============================================================================
+ * MOBILE VIRTUAL JOYSTICK & TOUCH ACTION BUTTONS
+ * ============================================================================ */
+#touch-controls {
+  display: none;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+  #touch-controls {
+    display: block;
+  }
+  .hud-top-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .hud-center-column {
+    grid-column: span 2;
+    order: 3;
+  }
+}
+
+#joystick-zone {
+  position: absolute;
+  bottom: 85px;
+  left: 26px;
+  width: 110px;
+  height: 110px;
+  background: rgba(20, 22, 28, 0.55);
+  border: 2px solid rgba(232, 194, 102, 0.45);
+  border-radius: 50%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  background: radial-gradient(circle, #ffe28a, #b5892e);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+.touch-actions-cluster {
+  position: absolute;
+  bottom: 85px;
+  right: 22px;
+  display: grid;
+  grid-template-columns: 64px 64px;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.touch-action-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(24, 26, 32, 0.85);
+  border: 2px solid var(--gold-primary);
+  color: var(--parchment);
+  font-family: var(--font-serif);
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  touch-action: manipulation;
+}
